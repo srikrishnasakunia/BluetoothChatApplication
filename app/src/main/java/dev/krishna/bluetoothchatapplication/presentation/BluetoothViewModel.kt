@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.krishna.bluetoothchatapplication.domain.chat.BluetoothController
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import dev.krishna.bluetoothchatapplication.domain.chat.BluetoothDeviceDomain
+import dev.krishna.bluetoothchatapplication.domain.chat.ConnectionResult
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,11 +27,83 @@ class BluetoothViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000),_state.value)
 
+    var deviceConnectionJob: Job? = null
+
+    init {
+        bluetoothController.isConnected.onEach { _isConnected ->
+            _state.update { it.copy(isConnected = _isConnected) }
+        }.launchIn(viewModelScope)
+
+        bluetoothController.errors.onEach { _errors ->
+            _state.update { it.copy(errorMessage = _errors) }
+        }.launchIn(viewModelScope)
+    }
+
+    fun connectToDevice(device: BluetoothDeviceDomain){
+       _state.update { it.copy(isConnecting = true) }
+       deviceConnectionJob = bluetoothController
+           .connectToDevice(device)
+           .listen()
+    }
+
+    fun disconnectFromConnectedDevice(){
+        deviceConnectionJob?.cancel()
+        bluetoothController.closeTheConnectedConnection()
+        _state.update { it.copy(
+            isConnecting = false,
+            isConnected = false
+        ) }
+    }
+
+    fun waitForIncomingConnectionRequests(){
+        _state.update { it.copy(isConnecting = true) }
+        deviceConnectionJob = bluetoothController
+            .startBluetoothServer()
+            .listen()
+    }
     fun startScan(){
         bluetoothController.startDiscovery()
     }
 
     fun stopScan(){
         bluetoothController.stopDiscovery()
+    }
+
+    private fun Flow<ConnectionResult>.listen(): Job {
+        return onEach { _result ->
+            when (_result) {
+                ConnectionResult.ConnectionEstablished -> {
+                    _state.update {
+                        it.copy(
+                            isConnected = true,
+                            isConnecting = false,
+                            errorMessage = null
+                        )
+                    }
+                }
+                is ConnectionResult.Error -> {
+                    _state.update {
+                        it.copy(
+                            isConnected = false,
+                            isConnecting = false,
+                            errorMessage = _result.message
+                        )
+                    }
+                }
+            }
+        }.catch {
+            bluetoothController.closeTheConnectedConnection()
+            _state.update {
+                it.copy(
+                    isConnected = false,
+                    isConnecting = false
+                )
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        bluetoothController.releaseDevices()
     }
 }
