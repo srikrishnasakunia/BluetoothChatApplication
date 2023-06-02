@@ -39,7 +39,7 @@ class AndroidBluetoothController(private val context: Context) : BluetoothContro
     override val pairedDevice: StateFlow<List<BluetoothDeviceDomain>>
         get() = _pairedDevices.asStateFlow()
 
-    private val _isConnected = MutableStateFlow(false)
+    private val _isConnected = MutableStateFlow<Boolean>(false)
     override val isConnected: StateFlow<Boolean>
         get() = _isConnected.asStateFlow()
 

@@ -19,7 +19,9 @@ import dev.krishna.bluetoothchatapplication.presentation.BluetoothUiState
 fun DeviceScreen(
     state: BluetoothUiState,
     onStartScan: ()->Unit,
-    onStopScan: ()->Unit
+    onStopScan: ()->Unit,
+    onStartServer: ()->Unit,
+    onDeviceClick: (BluetoothDevice)->Unit
 ){
     Column(
         modifier = Modifier
@@ -28,7 +30,7 @@ fun DeviceScreen(
         BluetoothDeviceScanList(
             pairedDevices = state.pairedDevice,
             scannedDevices = state.pairedDevice,
-            onClick = {},
+            onClick = onDeviceClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
@@ -42,6 +44,9 @@ fun DeviceScreen(
             }
             Button(onClick = onStopScan) {
                 Text(text = "Stop Scan")
+            }
+            Button(onClick = onStartServer) {
+                Text(text = "Start Server")
             }
         }
     }
