@@ -7,7 +7,16 @@ import dev.krishna.bluetoothchatapplication.domain.chat.BluetoothController
 import dev.krishna.bluetoothchatapplication.domain.chat.BluetoothDeviceDomain
 import dev.krishna.bluetoothchatapplication.domain.chat.ConnectionResult
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,7 +32,8 @@ class BluetoothViewModel @Inject constructor(
     ){ scannedDevices, pairedDevices, state ->
         state.copy(
             scannedDevice = scannedDevices,
-            pairedDevice = pairedDevices
+            pairedDevice = pairedDevices,
+            message = if (state.isConnected) state.message else emptyList()
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000),_state.value)
 
@@ -69,6 +79,19 @@ class BluetoothViewModel @Inject constructor(
         bluetoothController.stopDiscovery()
     }
 
+    fun sendMessage(message: String) {
+        viewModelScope.launch {
+            val bluetoothMessage = bluetoothController.sendMessage(message)
+            if (bluetoothMessage != null) {
+                _state.update {
+                    it.copy(
+                        message = it.message + bluetoothMessage
+                    )
+                }
+            }
+        }
+    }
+
     private fun Flow<ConnectionResult>.listen(): Job {
         return onEach { _result ->
             when (_result) {
@@ -78,6 +101,13 @@ class BluetoothViewModel @Inject constructor(
                             isConnected = true,
                             isConnecting = false,
                             errorMessage = null
+                        )
+                    }
+                }
+                is ConnectionResult.TransferSucceeded -> {
+                    _state.update {
+                        it.copy(
+                            message = it.message + _result.message
                         )
                     }
                 }

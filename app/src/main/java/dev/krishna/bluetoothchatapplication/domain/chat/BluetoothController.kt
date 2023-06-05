@@ -24,6 +24,9 @@ interface BluetoothController  {
      *  server for exchanging data.**/
     fun connectToDevice(device: BluetoothDevice):Flow<ConnectionResult>
 
+    /** This function is responsible for sending message to the Server.**/
+    suspend fun sendMessage(message: String): BluetoothMessage?
+
     /**This function deals with the termination request to terminate the connection. **/
     fun closeTheConnectedConnection()
 }
