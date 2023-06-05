@@ -23,8 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.krishna.bluetoothchatapplication.domain.chat.BluetoothMessage
 import dev.krishna.bluetoothchatapplication.presentation.BluetoothUiState
+import dev.krishna.bluetoothchatapplication.ui.theme.BluetoothChatApplicationTheme
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -107,5 +110,17 @@ fun ChatScreen(
                 )
             }
         }
+    }
+}
+
+val state = BluetoothUiState(
+    message = BluetoothSampleMessage.messages
+)
+
+@Preview
+@Composable
+fun ChatScreenPreview() {
+    BluetoothChatApplicationTheme {
+        ChatScreen(state = state, onDisconnect = { /*TODO*/ }, onSendMessage = {})
     }
 }
