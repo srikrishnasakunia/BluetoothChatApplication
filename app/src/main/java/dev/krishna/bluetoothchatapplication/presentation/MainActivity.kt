@@ -55,7 +55,9 @@ class MainActivity : ComponentActivity() {
         ){ perms->
             val canEnableBluetooth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ){
                 perms[Manifest.permission.BLUETOOTH_CONNECT] == true
-            } else true
+            } else {
+                perms[Manifest.permission.BLUETOOTH] == true && perms[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            }
 
             if (canEnableBluetooth && !isBluetoothEnabled){
                 enableBluetoothLauncher.launch(
@@ -69,6 +71,13 @@ class MainActivity : ComponentActivity() {
                 arrayOf(
                     Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.BLUETOOTH_CONNECT
+                )
+            )
+        } else {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
                 )
             )
         }

@@ -6,7 +6,7 @@ import java.util.Date
 
 fun String.toBluetoothMessage(isFromLocalSender: Boolean): BluetoothMessage{
     val name = substringBefore(" # ")
-    val message = substringAfter(" # ")
+    val message = substringAfter(" # ").substringBeforeLast(" # ")
     val timestamp = substringAfterLast(" # ")
     return BluetoothMessage(
         message = message,

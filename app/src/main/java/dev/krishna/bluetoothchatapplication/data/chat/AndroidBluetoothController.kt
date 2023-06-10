@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.content.IntentFilter
+import android.os.Build
 import dev.krishna.bluetoothchatapplication.domain.chat.BluetoothController
 import dev.krishna.bluetoothchatapplication.domain.chat.BluetoothDeviceDomain
 import dev.krishna.bluetoothchatapplication.domain.chat.BluetoothMessage
@@ -83,7 +84,11 @@ class AndroidBluetoothController(private val context: Context) : BluetoothContro
     }
 
     override fun startDiscovery() {
-        if (!hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+                return
+            }
+        }else if (!hasPermission(context, Manifest.permission.BLUETOOTH)) {
             return
         }
 
@@ -96,8 +101,13 @@ class AndroidBluetoothController(private val context: Context) : BluetoothContro
     }
 
     override fun stopDiscovery() {
-        if (!hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+                return
+            }
+        }else if (!hasPermission(context, Manifest.permission.BLUETOOTH)) {
             return
+        }
 
         bluetoothAdapter?.cancelDiscovery()
     }
@@ -177,8 +187,13 @@ class AndroidBluetoothController(private val context: Context) : BluetoothContro
     }
 
     override suspend fun sendMessage(message: String): BluetoothMessage? {
-        if ((!hasPermission(context,Manifest.permission.BLUETOOTH_CONNECT)) ||
-            (bluetoothDataTransferService == null)){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
+                || (bluetoothDataTransferService == null)) {
+                return null
+            }
+        } else if (!hasPermission(context, Manifest.permission.BLUETOOTH) ||
+            (bluetoothDataTransferService == null)) {
             return null
         }
         val bluetoothMessage = BluetoothMessage(
@@ -206,7 +221,11 @@ class AndroidBluetoothController(private val context: Context) : BluetoothContro
     }
 
     private fun updatePairedDevices() {
-        if (!hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+                return
+            }
+        } else if (!hasPermission(context,Manifest.permission.BLUETOOTH)){
             return
         }
         bluetoothAdapter
@@ -219,7 +238,11 @@ class AndroidBluetoothController(private val context: Context) : BluetoothContro
     }
 
     private fun checkBluetoothPermission() {
-        if (!hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT)) {
+                throw SecurityException(BLUETOOTH_PERMISSION_ERROR_MESSAGE)
+            }
+        }else if (!hasPermission(context, Manifest.permission.BLUETOOTH)) {
             throw SecurityException(BLUETOOTH_PERMISSION_ERROR_MESSAGE)
         }
     }
